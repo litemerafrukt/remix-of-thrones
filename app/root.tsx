@@ -1,5 +1,4 @@
 import type { MetaFunction } from "@remix-run/node"
-import { json } from "@remix-run/node"
 import {
   Links,
   LiveReload,
@@ -7,16 +6,12 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  useLoaderData,
 } from "@remix-run/react"
 import "mapbox-gl/dist/mapbox-gl.css"
+import normalize from "normalize.css"
 
-export async function loader() {
-  return json({
-    ENV: {
-      MAPBOX_TOKEN: process.env.MAPBOX_TOKEN,
-    },
-  })
+export function links() {
+  return [{ rel: "stylesheet", href: normalize }]
 }
 
 export const meta: MetaFunction = () => ({
@@ -26,7 +21,6 @@ export const meta: MetaFunction = () => ({
 })
 
 export default function App() {
-  const data = useLoaderData()
   return (
     <html lang="en">
       <head>
@@ -36,11 +30,6 @@ export default function App() {
       <body>
         <Outlet />
         <ScrollRestoration />
-        {/* <script
-          dangerouslySetInnerHTML={{
-            __html: `window.ENV = ${JSON.stringify(data.ENV)}`,
-          }}
-        /> */}
         <Scripts />
         <LiveReload />
       </body>
