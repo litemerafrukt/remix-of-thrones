@@ -7,11 +7,14 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react"
-import "mapbox-gl/dist/mapbox-gl.css"
+import mapboxCss from "mapbox-gl/dist/mapbox-gl.css"
 import normalize from "normalize.css"
 
 export function links() {
-  return [{ rel: "stylesheet", href: normalize }]
+  return [
+    { rel: "stylesheet", href: normalize },
+    { rel: "stylesheet", href: mapboxCss },
+  ]
 }
 
 export const meta: MetaFunction = () => ({
