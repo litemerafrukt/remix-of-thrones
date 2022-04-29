@@ -37,6 +37,7 @@ export default function Westeros({ mapboxToken, children }: Props) {
         [-20, -40],
         [90, 45],
       ]}
+      maxZoom={6}
       mapStyle={{
         version: 8,
         sources: {
