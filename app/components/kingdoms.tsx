@@ -16,17 +16,21 @@ type Props = { boundaries: KingdomBoundary[] }
 export default function Kingdoms({ boundaries }: Props) {
   const [selectedKingdom] = useAtom(selectedAtom)
 
-  return boundaries.map((boundary, i) => {
-    const geoJSON = wrapKingdomAsGeoJson(boundary)
+  return (
+    <>
+      {boundaries.map((boundary, i) => {
+        const geoJSON = wrapKingdomAsGeoJson(boundary)
 
-    return (
-      <Kingdom
-        key={geoJSON.properties.gid}
-        geoJSON={geoJSON}
-        isSelected={geoJSON.properties.gid === selectedKingdom}
-      />
-    )
-  })
+        return (
+          <Kingdom
+            key={geoJSON.properties.gid}
+            geoJSON={geoJSON}
+            isSelected={geoJSON.properties.gid === selectedKingdom}
+          />
+        )
+      })}
+    </>
+  )
 }
 
 type KingdomProps = {

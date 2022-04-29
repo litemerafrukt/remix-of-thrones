@@ -9,11 +9,13 @@ import {
 } from "@remix-run/react"
 import mapboxCss from "mapbox-gl/dist/mapbox-gl.css"
 import normalize from "normalize.css"
+import rootCss from "./root.css"
 
 export function links() {
   return [
     { rel: "stylesheet", href: normalize },
     { rel: "stylesheet", href: mapboxCss },
+    { rel: "stylesheet", href: rootCss },
   ]
 }
 
