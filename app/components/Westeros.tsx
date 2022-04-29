@@ -29,10 +29,14 @@ export default function Westeros({ mapboxToken, children }: Props) {
       mapboxAccessToken={mapboxToken}
       initialViewState={{
         longitude: 35,
-        latitude: 20,
+        latitude: 13,
         zoom: 3.5,
       }}
       style={{ width: "100vw", height: "100vh" }}
+      maxBounds={[
+        [-20, -40],
+        [90, 45],
+      ]}
       mapStyle={{
         version: 8,
         sources: {
@@ -49,8 +53,8 @@ export default function Westeros({ mapboxToken, children }: Props) {
             id: "simple-tiles",
             type: "raster",
             source: "raster-tiles",
-            minzoom: 1,
-            maxzoom: 9,
+            minzoom: 2,
+            maxzoom: 7,
           },
         ],
       }}
