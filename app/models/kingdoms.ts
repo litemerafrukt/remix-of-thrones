@@ -1,13 +1,13 @@
 import { addRowMetadataAsProperties } from "./db/addRowMetadataAsProperties"
 import { getKingdomBoundaries as qKingdomBoundaries } from "./db/queries"
 
-export type KingdomBoundaries = {
+export type KingdomBoundary = {
   type: "MultiPolygon"
   coordinates: GeoJSON.Position[][][]
   properties: { name: string; gid: number }
 }
 
-export const getKingdomBoundaries = async (): Promise<KingdomBoundaries[]> => {
+export const getKingdomBoundaries = async (): Promise<KingdomBoundary[]> => {
   const boundaries = await qKingdomBoundaries()
   if (boundaries.length === 0) {
     return Promise.reject(new Error("No kingdom boundaries found"))
@@ -17,5 +17,5 @@ export const getKingdomBoundaries = async (): Promise<KingdomBoundaries[]> => {
     addRowMetadataAsProperties(row, "name", "gid")
   )
 
-  return kingdomBoundaries as KingdomBoundaries[]
+  return kingdomBoundaries as KingdomBoundary[]
 }

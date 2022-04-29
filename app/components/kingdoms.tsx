@@ -1,35 +1,59 @@
-import type { KingdomBoundaries } from "~/models/kingdoms"
+import type { KingdomBoundary } from "~/models/kingdoms"
 import { Layer, Source } from "react-map-gl"
+import { useAtom } from "jotai"
+import { selectedAtom } from "~/store/selected"
 
-type Props = { boundaries: KingdomBoundaries[] }
+const wrapKingdomAsGeoJson = (
+  geometry: KingdomBoundary
+): GeoJSON.Feature & { properties: { name: string; gid: number } } => ({
+  type: "Feature",
+  geometry,
+  properties: geometry.properties,
+})
+
+type Props = { boundaries: KingdomBoundary[] }
 
 export default function Kingdoms({ boundaries }: Props) {
+  const [selectedKingdom] = useAtom(selectedAtom)
+
+  return boundaries.map((boundary, i) => {
+    const geoJSON = wrapKingdomAsGeoJson(boundary)
+
+    return (
+      <Kingdom
+        key={geoJSON.properties.gid}
+        geoJSON={geoJSON}
+        isSelected={geoJSON.properties.gid === selectedKingdom}
+      />
+    )
+  })
+}
+
+type KingdomProps = {
+  geoJSON: GeoJSON.Feature & { properties: { gid: number } }
+  isSelected: boolean
+}
+function Kingdom({ geoJSON, isSelected }: KingdomProps) {
+  const gid = geoJSON.properties.gid
+  const id = `kingdom-boundary-${gid}`
+  const fillColor = isSelected ? "#0a0" : "#222"
+
   return (
-    <Source
-      id="kingdom-boundaries"
-      type="geojson"
-      data={{
-        type: "FeatureCollection",
-        features: boundaries.map((boundary) => ({
-          type: "Feature",
-          geometry: boundary,
-          properties: boundary.properties,
-        })),
-      }}
-    >
+    <Source id={id} type="geojson" data={geoJSON}>
       <Layer
-        id="kingdoms"
+        id={`kingdom-${gid}`}
+        metadata={{ type: "kingdom", gid }}
         type="fill"
-        source="kingdom-boundaries"
+        source={id}
         paint={{
-          "fill-color": "#222",
-          "fill-opacity": 0.05,
+          "fill-color": fillColor,
+          "fill-opacity": 0.15,
         }}
       />
       <Layer
-        id="kingdoms-outline"
+        id={`kingdom-outline-${gid}`}
         type="line"
-        source="kingdom-boundaries"
+        source={id}
         paint={{
           "line-color": "#000",
         }}
