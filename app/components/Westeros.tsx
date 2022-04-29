@@ -1,3 +1,5 @@
+import { useRef } from "react"
+import type { MapRef, MapLayerMouseEvent } from "react-map-gl"
 import Map from "react-map-gl"
 
 interface Props {
@@ -6,8 +8,24 @@ interface Props {
 }
 
 export default function Westeros({ mapboxToken, children }: Props) {
+  const map = useRef<MapRef>(null)
+
+  const handleClick = (event: MapLayerMouseEvent) => {
+    const features = map.current?.queryRenderedFeatures(event.point, {
+      layers: ["kingdoms"],
+    })
+
+    if ((features && (features?.[0] as any))?.layer?.paint?.["fill-color"]) {
+      ;(features[0] as any).layer.paint["fill-color"] = "#f00"
+    }
+
+    console.log((features?.[0] as any)?.layer?.paint?.["fill-color"])
+  }
+
   return (
     <Map
+      ref={map}
+      onClick={handleClick}
       mapboxAccessToken={mapboxToken}
       initialViewState={{
         longitude: 35,
