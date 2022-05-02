@@ -2,6 +2,7 @@ import type { KingdomBoundary } from "~/models/kingdoms"
 import { Layer, Source } from "react-map-gl"
 import { useAtom } from "jotai"
 import { selectedAtom } from "~/store/selected"
+import { memo } from "react"
 
 const wrapKingdomAsGeoJson = (
   geometry: KingdomBoundary
@@ -13,37 +14,45 @@ const wrapKingdomAsGeoJson = (
 
 type Props = { boundaries: KingdomBoundary[] }
 
-export default function Kingdoms({ boundaries }: Props) {
+export default memo(function Kingdoms({ boundaries }: Props) {
   const [selectedKingdom] = useAtom(selectedAtom)
 
   return (
     <>
-      {boundaries.map((boundary, i) => {
+      {boundaries.map((boundary) => {
         const geoJSON = wrapKingdomAsGeoJson(boundary)
+        const gid = geoJSON.properties.gid
+        const id = `kingdom-boundary-${gid}`
 
+        return <Source key={id} id={id} type="geojson" data={geoJSON} />
+      })}
+
+      {boundaries.map((boundary) => {
         return (
           <Kingdom
-            key={geoJSON.properties.gid}
-            geoJSON={geoJSON}
-            isSelected={geoJSON.properties.gid === selectedKingdom}
+            key={boundary.properties.gid}
+            boundary={boundary}
+            isSelected={boundary.properties.gid === selectedKingdom}
           />
         )
       })}
     </>
   )
-}
+})
+
+const Kingdom = memo(Kingdom_)
 
 type KingdomProps = {
-  geoJSON: GeoJSON.Feature & { properties: { gid: number } }
+  boundary: KingdomBoundary
   isSelected: boolean
 }
-function Kingdom({ geoJSON, isSelected }: KingdomProps) {
-  const gid = geoJSON.properties.gid
+function Kingdom_({ boundary, isSelected }: KingdomProps) {
+  const gid = boundary.properties.gid
   const id = `kingdom-boundary-${gid}`
   const fillColor = isSelected ? "#0a0" : "#222"
 
   return (
-    <Source id={id} type="geojson" data={geoJSON}>
+    <>
       <Layer
         id={`kingdom-${gid}`}
         metadata={{ type: "kingdom", gid }}
@@ -62,6 +71,6 @@ function Kingdom({ geoJSON, isSelected }: KingdomProps) {
           "line-color": "#000",
         }}
       />
-    </Source>
+    </>
   )
 }

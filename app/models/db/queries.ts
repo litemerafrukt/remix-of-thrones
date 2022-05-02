@@ -37,7 +37,7 @@ export const countCastles = async (kingdomGid: number) =>
 /** Get the summary for a location or region, by id */
 export const getSummary = async (table: string, gid: number) =>
   await sql`
-      SELECT summary, url
+      SELECT name, summary, url
       FROM ${sql(table)}
       WHERE gid = ${gid}
       LIMIT(1);`

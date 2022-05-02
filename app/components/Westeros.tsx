@@ -1,3 +1,4 @@
+import { useNavigate } from "@remix-run/react"
 import { useAtom } from "jotai"
 import { useRef } from "react"
 import type { MapRef, MapLayerMouseEvent } from "react-map-gl"
@@ -13,13 +14,15 @@ interface Props {
 export default function Westeros({ mapboxToken, className, children }: Props) {
   const map = useRef<MapRef>(null)
   const [, setSelected] = useAtom(selectAtom)
+  const navigate = useNavigate()
 
-  const handleClick = (event: MapLayerMouseEvent) => {
+  const handleClick = async (event: MapLayerMouseEvent) => {
     const feature = map.current?.queryRenderedFeatures(event.point).at(0)
     if (!feature) return
 
     if (feature.layer.metadata?.type === "kingdom") {
       setSelected(feature.layer.metadata.gid)
+      navigate(`/info/${feature.layer.metadata.gid}`)
     }
   }
 
