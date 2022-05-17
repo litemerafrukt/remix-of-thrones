@@ -1,8 +1,8 @@
 import { useNavigate } from "@remix-run/react"
 import { useAtom } from "jotai"
-import { useRef } from "react"
+import mapboxgl from "mapbox-gl"
+import { createContext, useEffect, useRef, useState } from "react"
 import type { MapRef, MapLayerMouseEvent } from "react-map-gl"
-import Map from "react-map-gl"
 import { selectAtom } from "~/store/selected"
 
 interface Props {
@@ -11,38 +11,32 @@ interface Props {
   children?: React.ReactNode
 }
 
+export const MapContext = createContext<mapboxgl.Map | null>(null)
+
 export default function Westeros({ mapboxToken, className, children }: Props) {
-  const map = useRef<MapRef>(null)
-  const [, setSelected] = useAtom(selectAtom)
-  const navigate = useNavigate()
+  const [isLoaded, setIsLoaded] = useState(false)
+  const map = useRef<mapboxgl.Map | null>(null)
+  const mapContainer = useRef(null)
+  // const [, setSelected] = useAtom(selectAtom)
+  // const navigate = useNavigate()
 
-  const handleClick = async (event: MapLayerMouseEvent) => {
-    const feature = map.current?.queryRenderedFeatures(event.point).at(0)
-    if (!feature) return
+  // const handleClick = async (event: MapLayerMouseEvent) => {
+  //   const feature = map.current?.queryRenderedFeatures(event.point).at(0)
+  //   if (!feature) return
 
-    if (feature.layer.metadata?.type === "kingdom") {
-      setSelected(feature.layer.metadata.gid)
-      navigate(`/info/${feature.layer.metadata.gid}`)
-    }
-  }
+  //   if (feature.layer.metadata?.type === "kingdom") {
+  //     setSelected(feature.layer.metadata.gid)
+  //     navigate(`/info/${feature.layer.metadata.gid}`)
+  //   }
+  // }
 
-  return (
-    <div className={className}>
-      <Map
-        ref={map}
-        onClick={handleClick}
-        mapboxAccessToken={mapboxToken}
-        initialViewState={{
-          longitude: 21,
-          latitude: 13,
-          zoom: 3.5,
-        }}
-        maxBounds={[
-          [-20, -40],
-          [90, 45],
-        ]}
-        maxZoom={6}
-        mapStyle={{
+  useEffect(() => {
+    if (!map.current && mapContainer.current) {
+      mapboxgl.accessToken = mapboxToken
+
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: {
           version: 8,
           sources: {
             "raster-tiles": {
@@ -62,10 +56,27 @@ export default function Westeros({ mapboxToken, className, children }: Props) {
               maxzoom: 7,
             },
           ],
-        }}
-      >
-        {children}
-      </Map>
+        },
+        maxBounds: [
+          [-20, -40],
+          [90, 45],
+        ],
+        maxZoom: 6,
+        center: [21, 13],
+        zoom: 3.5,
+      }).on("load", () => {
+        setIsLoaded(true)
+      })
+    }
+  }, [mapboxToken])
+
+  return (
+    <div className={className}>
+      <div ref={mapContainer} style={{ height: "100%" }}>
+        <MapContext.Provider value={map.current}>
+          {isLoaded && children}
+        </MapContext.Provider>
+      </div>
     </div>
   )
 }
