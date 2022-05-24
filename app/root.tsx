@@ -9,6 +9,7 @@ import {
 } from "@remix-run/react"
 import mapboxCss from "mapbox-gl/dist/mapbox-gl.css"
 import normalize from "normalize.css"
+import { StrictMode } from "react"
 import rootCss from "./root.css"
 
 export function links() {
@@ -33,7 +34,9 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <Outlet />
+        <StrictMode>
+          <Outlet />
+        </StrictMode>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />

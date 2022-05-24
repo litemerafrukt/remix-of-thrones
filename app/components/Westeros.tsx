@@ -1,9 +1,6 @@
-import { useNavigate } from "@remix-run/react"
-import { useAtom } from "jotai"
 import mapboxgl from "mapbox-gl"
-import { createContext, useEffect, useRef, useState } from "react"
-import type { MapRef, MapLayerMouseEvent } from "react-map-gl"
-import { selectAtom } from "~/store/selected"
+import { createContext, useRef, useState } from "react"
+import { useEffectOnce } from "~/hooks/useEffectOnce"
 
 interface Props {
   mapboxToken: string
@@ -17,20 +14,8 @@ export default function Westeros({ mapboxToken, className, children }: Props) {
   const [isLoaded, setIsLoaded] = useState(false)
   const map = useRef<mapboxgl.Map | null>(null)
   const mapContainer = useRef(null)
-  // const [, setSelected] = useAtom(selectAtom)
-  // const navigate = useNavigate()
 
-  // const handleClick = async (event: MapLayerMouseEvent) => {
-  //   const feature = map.current?.queryRenderedFeatures(event.point).at(0)
-  //   if (!feature) return
-
-  //   if (feature.layer.metadata?.type === "kingdom") {
-  //     setSelected(feature.layer.metadata.gid)
-  //     navigate(`/info/${feature.layer.metadata.gid}`)
-  //   }
-  // }
-
-  useEffect(() => {
+  useEffectOnce(() => {
     if (!map.current && mapContainer.current) {
       mapboxgl.accessToken = mapboxToken
 
@@ -68,7 +53,12 @@ export default function Westeros({ mapboxToken, className, children }: Props) {
         setIsLoaded(true)
       })
     }
-  }, [mapboxToken])
+
+    return () => {
+      map.current?.remove()
+      map.current = null
+    }
+  })
 
   return (
     <div className={className}>

@@ -1,11 +1,12 @@
 import type { KingdomBoundary } from "~/models/kingdoms"
 import { useAtom } from "jotai"
 import { selectedAtom } from "~/store/selected"
-import { useContext, useEffect } from "react"
+import { useCallback, useContext } from "react"
 import { MapContext } from "./Westeros"
 import { useNavigate } from "@remix-run/react"
 import { selectAtom } from "~/store/selected"
 import { type MapLayerMouseEvent } from "mapbox-gl"
+import { useEffectOnce } from "~/hooks/useEffectOnce"
 
 const nextTick = () => new Promise((resolve) => setTimeout(resolve, 0))
 
@@ -23,7 +24,7 @@ export default function Kingdoms({ boundaries }: Props) {
   const map = useContext(MapContext)
   const [selectedKingdom] = useAtom(selectedAtom)
 
-  useEffect(() => {
+  useEffectOnce(() => {
     if (!map) return
 
     boundaries.forEach((boundary) => {
@@ -36,7 +37,19 @@ export default function Kingdoms({ boundaries }: Props) {
         data: geoJSON,
       })
     })
-  }, [map, boundaries])
+
+    return () => {
+      boundaries.forEach((boundary) => {
+        const gid = boundary.properties.gid
+        const sourceId = `kingdom-boundary-${gid}`
+        try {
+          map.removeSource(sourceId)
+        } catch {
+          // ignore
+        }
+      })
+    }
+  })
 
   return (
     <>
@@ -44,10 +57,20 @@ export default function Kingdoms({ boundaries }: Props) {
         const gid = boundary.properties.gid
         return (
           <Kingdom
-            key={gid}
+            key={`${gid} - ${gid === selectedKingdom}`}
             gid={gid}
             sourceId={`kingdom-boundary-${gid}`}
             isSelected={gid === selectedKingdom}
+          />
+        )
+      })}
+      {boundaries.map((boundary) => {
+        const gid = boundary.properties.gid
+        return (
+          <KingdomOutlines
+            key={gid + "-outlines"}
+            gid={gid}
+            sourceId={`kingdom-boundary-${gid}`}
           />
         )
       })}
@@ -65,17 +88,20 @@ function Kingdom({ gid, sourceId, isSelected }: KingdomProps) {
   const [, setSelected] = useAtom(selectAtom)
   const navigate = useNavigate()
 
-  const handleClick = async (event: MapLayerMouseEvent) => {
-    const feature = map?.queryRenderedFeatures(event.point).at(0)
-    if (!feature) return
+  const handleClick = useCallback(
+    (event: MapLayerMouseEvent) => {
+      const feature = map?.queryRenderedFeatures(event.point).at(0)
+      if (!feature) return
 
-    if (feature.layer.metadata?.type === "kingdom") {
-      setSelected(feature.layer.metadata.gid)
-      navigate(`/info/${feature.layer.metadata.gid}`)
-    }
-  }
+      if (feature.layer.metadata?.type === "kingdom") {
+        setSelected(feature.layer.metadata.gid)
+        navigate(`/info/${feature.layer.metadata.gid}`)
+      }
+    },
+    [map, navigate, setSelected]
+  )
 
-  useEffect(() => {
+  useEffectOnce(() => {
     if (!map) return
 
     const fillColor = isSelected ? "#0a0" : "#222"
@@ -92,16 +118,6 @@ function Kingdom({ gid, sourceId, isSelected }: KingdomProps) {
             "fill-opacity": 0.15,
           },
         })
-        .addLayer({
-          id: `kingdom-outline-${gid}`,
-          metadata: { type: "kingdom", gid },
-          type: "line",
-          source: sourceId,
-          paint: {
-            "line-color": "#222",
-            "line-opacity": 0.65,
-          },
-        })
         .on("click", `kingdom-${gid}`, handleClick)
     }
 
@@ -112,13 +128,53 @@ function Kingdom({ gid, sourceId, isSelected }: KingdomProps) {
 
     return () => {
       try {
+        map.off("click", `kingdom-${gid}`, handleClick)
         map.removeLayer(`kingdom-${gid}`)
+      } catch {
+        // ignore
+      }
+    }
+  })
+
+  return null
+}
+
+type KingdomOutlineProps = {
+  gid: number
+  sourceId: `kingdom-boundary-${number}`
+}
+function KingdomOutlines({ gid, sourceId }: KingdomOutlineProps) {
+  const map = useContext(MapContext)
+
+  useEffectOnce(() => {
+    if (!map) return
+
+    const addLayer = () => {
+      map.addLayer({
+        id: `kingdom-outline-${gid}`,
+        metadata: { type: "kingdom", gid },
+        type: "line",
+        source: sourceId,
+        paint: {
+          "line-color": "#222",
+          "line-opacity": 0.65,
+        },
+      })
+    }
+
+    ;(async () => {
+      await nextTick()
+      addLayer()
+    })()
+
+    return () => {
+      try {
         map.removeLayer(`kingdom-outline-${gid}`)
       } catch {
         // ignore
       }
     }
-  }, [map, gid, sourceId, isSelected])
+  })
 
   return null
 }
